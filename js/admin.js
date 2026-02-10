@@ -2,7 +2,7 @@
  * CONFIG
  *************************************************/
 const API_URL = "https://script.google.com/macros/s/AKfycbzxI3PpNK3Hm8AbLCvrMUFcnX3q93HmuF32jynM9RkDwxJuAVhUcoFGw0mYJMYcRBSN/exec";
-const ADMIN_PASSWORD = "jere2024";
+const ADMIN_PASSWORD = "jere2026";
 
 /*************************************************
  * UTILIDADES
@@ -87,16 +87,24 @@ function cerrarSesion() {
   }
 }
 
-/*************************************************
- * CARGAR RESERVAS
- *************************************************/
 async function cargarReservas() {
-  try {
-    document.getElementById('loader').style.display = 'block';
-    document.getElementById('tablaReservas').style.display = 'none';
-    document.getElementById('sinResultados').style.display = 'none';
+  const loader = document.getElementById('loader');
+  const tabla = document.getElementById('tablaReservas');
+  const sinResultados = document.getElementById('sinResultados');
 
-    const response = await fetch(`${API_URL}?action=getAll`);
+  try {
+    loader.style.display = 'block';
+    tabla.style.display = 'none';
+    sinResultados.style.display = 'none';
+
+    const response = await fetch(`${API_URL}?action=getAll`, {
+      cache: 'no-store'
+    });
+
+    if (!response.ok) {
+      throw new Error('Error HTTP ' + response.status);
+    }
+
     const data = await response.json();
 
     reservasData = data.reservas || [];
@@ -105,15 +113,22 @@ async function cargarReservas() {
     actualizarEstadisticas();
     renderizarTabla();
 
-    document.getElementById('loader').style.display = 'none';
-    document.getElementById('tablaReservas').style.display =
-      reservasFiltradas.length ? 'block' : 'none';
+    if (reservasFiltradas.length === 0) {
+      sinResultados.style.display = 'block';
+    } else {
+      tabla.style.display = 'block';
+    }
 
-  } catch (err) {
-    console.error(err);
-    alert('Error al cargar reservas');
+  } catch (error) {
+    console.error('❌ Error cargando reservas:', error);
+    sinResultados.style.display = 'block';
+
+  } finally {
+    // 🔑 ESTO SOLUCIONA EL PROBLEMA EN MÓVIL
+    loader.style.display = 'none';
   }
 }
+
 
 /*************************************************
  * ESTADÍSTICAS
