@@ -26,10 +26,15 @@ Te confirmamos tu hora en *Jere Barber* ✂️
 ¡Te esperamos!
 `.trim();
 
-  window.open(
-    `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`,
-    '_blank'
-  );
+  // Crear link invisible (funciona en móvil y desktop)
+  const link = document.createElement('a');
+  link.href = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  
+  document.body.appendChild(link);
+  link.click();
+  setTimeout(() => document.body.removeChild(link), 100);
 }
 
 function enviarWhatsappCancelacion(reserva) {
@@ -47,10 +52,15 @@ Te informamos que tu reserva en *Jere Barber* ha sido *cancelada* ❌
 Si deseas reagendar una nueva hora, escríbenos por este mismo medio.
 `.trim();
 
-  window.open(
-    `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`,
-    '_blank'
-  );
+  // Crear link invisible (funciona en móvil y desktop)
+  const link = document.createElement('a');
+  link.href = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  
+  document.body.appendChild(link);
+  link.click();
+  setTimeout(() => document.body.removeChild(link), 100);
 }
 
 
@@ -124,7 +134,6 @@ async function cargarReservas() {
     sinResultados.style.display = 'block';
 
   } finally {
-    // 🔑 ESTO SOLUCIONA EL PROBLEMA EN MÓVIL
     loader.style.display = 'none';
   }
 }
@@ -235,6 +244,7 @@ async function actualizarEstado(reserva, nuevoEstado) {
     return;
   }
 
+  // Enviar WhatsApp según acción
   if (nuevoEstado === 'confirmado') {
     enviarWhatsappConfirmacion(reserva);
   }
@@ -243,7 +253,61 @@ async function actualizarEstado(reserva, nuevoEstado) {
     enviarWhatsappCancelacion(reserva);
   }
 
+  // Recargar tabla
   cargarReservas();
+}
+
+/*************************************************
+ * FILTROS
+ *************************************************/
+function filtrarReservas() {
+  const filtroEstado = document.getElementById('filtroEstado')?.value || '';
+  const filtroFecha = document.getElementById('filtroFecha')?.value || '';
+  const filtroServicio = document.getElementById('filtroServicio')?.value || '';
+
+  reservasFiltradas = reservasData.filter(reserva => {
+    let cumpleFiltro = true;
+
+    if (filtroEstado && reserva.estado !== filtroEstado) {
+      cumpleFiltro = false;
+    }
+
+    if (filtroFecha && reserva.fecha !== filtroFecha) {
+      cumpleFiltro = false;
+    }
+
+    if (filtroServicio && reserva.servicio !== filtroServicio) {
+      cumpleFiltro = false;
+    }
+
+    return cumpleFiltro;
+  });
+
+  renderizarTabla();
+
+  const tabla = document.getElementById('tablaReservas');
+  const sinResultados = document.getElementById('sinResultados');
+
+  if (reservasFiltradas.length === 0) {
+    tabla.style.display = 'none';
+    sinResultados.style.display = 'block';
+  } else {
+    tabla.style.display = 'block';
+    sinResultados.style.display = 'none';
+  }
+}
+
+function limpiarFiltros() {
+  if (document.getElementById('filtroEstado')) {
+    document.getElementById('filtroEstado').value = '';
+  }
+  if (document.getElementById('filtroFecha')) {
+    document.getElementById('filtroFecha').value = '';
+  }
+  if (document.getElementById('filtroServicio')) {
+    document.getElementById('filtroServicio').value = '';
+  }
+  filtrarReservas();
 }
 
 /*************************************************
