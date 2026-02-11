@@ -11,56 +11,57 @@ function normalizarTelefono(tel) {
   return tel ? String(tel).replace(/\D/g, '') : '';
 }
 
+/**
+ * Abre WhatsApp con detección inteligente:
+ * - Móvil → whatsapp://send (app nativa, sin ventana en blanco)
+ * - Desktop → https://wa.me/ (WhatsApp Web, nueva pestaña)
+ */
+function abrirWhatsApp(telefono, mensaje) {
+  const textoEncoded = encodeURIComponent(mensaje);
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  const link = document.createElement('a');
+  link.href = isMobile
+    ? `whatsapp://send?phone=${telefono}&text=${textoEncoded}`
+    : `https://wa.me/${telefono}?text=${textoEncoded}`;
+  link.rel = 'noopener noreferrer';
+  if (!isMobile) link.target = '_blank';
+
+  document.body.appendChild(link);
+  link.click();
+  setTimeout(() => document.body.removeChild(link), 100);
+}
+
 function enviarWhatsappConfirmacion(reserva) {
   const telefono = normalizarTelefono(reserva.telefono);
   if (!telefono) return;
 
-  const mensaje = `
-Hola ${reserva.nombre_cliente || ''} 👋
+  const mensaje = `Hola ${reserva.nombre_cliente || ''} 👋
 Te confirmamos tu hora en *Jere Barber* ✂️
 
 📅 Fecha: ${reserva.fecha}
 ⏰ Hora: ${reserva.hora}
 💈 Servicio: ${reserva.servicio}
 
-¡Te esperamos!
-`.trim();
+¡Te esperamos!`.trim();
 
-  // Crear link invisible (funciona en móvil y desktop)
-  const link = document.createElement('a');
-  link.href = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
-  link.target = '_blank';
-  link.rel = 'noopener noreferrer';
-  
-  document.body.appendChild(link);
-  link.click();
-  setTimeout(() => document.body.removeChild(link), 100);
+  abrirWhatsApp(telefono, mensaje);
 }
 
 function enviarWhatsappCancelacion(reserva) {
   const telefono = normalizarTelefono(reserva.telefono);
   if (!telefono) return;
 
-  const mensaje = `
-Hola ${reserva.nombre_cliente || ''} 👋
+  const mensaje = `Hola ${reserva.nombre_cliente || ''} 👋
 Te informamos que tu reserva en *Jere Barber* ha sido *cancelada* ❌
 
 📅 Fecha: ${reserva.fecha}
 ⏰ Hora: ${reserva.hora}
 💈 Servicio: ${reserva.servicio}
 
-Si deseas reagendar una nueva hora, escríbenos por este mismo medio.
-`.trim();
+Si deseas reagendar, escríbenos por este mismo medio.`.trim();
 
-  // Crear link invisible (funciona en móvil y desktop)
-  const link = document.createElement('a');
-  link.href = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
-  link.target = '_blank';
-  link.rel = 'noopener noreferrer';
-  
-  document.body.appendChild(link);
-  link.click();
-  setTimeout(() => document.body.removeChild(link), 100);
+  abrirWhatsApp(telefono, mensaje);
 }
 
 
