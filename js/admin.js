@@ -1,7 +1,7 @@
 /*************************************************
  * CONFIG
  *************************************************/
-const API_URL = "https://script.google.com/macros/s/AKfycbzxI3PpNK3Hm8AbLCvrMUFcnX3q93HmuF32jynM9RkDwxJuAVhUcoFGw0mYJMYcRBSN/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwXhize3cZVOMr2aPU8D1SyVBDEcEmotKYqX0zfZdDnugxq0L2J72Ggb5SbYqgiTeAZ/exec";
 const ADMIN_PASSWORD = "jere2026";
 
 /*************************************************
@@ -198,18 +198,30 @@ function renderizarTabla() {
                 title="Confirmar">
                 ✔
               </button>
-              <button class="btn btn-danger btn-sm px-2 py-1"
+              <button class="btn btn-danger btn-sm px-2 py-1 mb-1"
                 onclick="cambiarEstado(${index}, 'cancelado')"
                 title="Cancelar">
                 ✖
               </button>
+              <button class="btn btn-danger btn-sm px-2 py-1"
+                onclick="eliminarReserva(${index})"
+                title="Eliminar">
+                🗑️
+              </button>
             </div>
           ` : `
-            <button class="btn btn-info btn-sm px-2 py-1"
-              onclick="verDetalle(${index})"
-              title="Ver">
-              👁️
-            </button>
+            <div class="btn-group-vertical btn-group-sm">
+              <button class="btn btn-info btn-sm px-2 py-1 mb-1"
+                onclick="verDetalle(${index})"
+                title="Ver">
+                👁️
+              </button>
+              <button class="btn btn-danger btn-sm px-2 py-1"
+                onclick="eliminarReserva(${index})"
+                title="Eliminar">
+                🗑️
+              </button>
+            </div>
           `}
         </td>
       `;
@@ -259,6 +271,11 @@ function renderizarTabla() {
               onclick="verDetalle(${index})"
               title="Ver detalle">
               <i class="bi bi-eye"></i>
+            </button>
+            <button class="btn btn-danger"
+              onclick="eliminarReserva(${index})"
+              title="Eliminar">
+              <i class="bi bi-trash"></i>
             </button>
           </div>
         </td>
@@ -484,6 +501,55 @@ function cambiarEstadoDesdeModal(index, nuevoEstado) {
   
   // Cambiar estado
   cambiarEstado(index, nuevoEstado);
+}
+
+/*************************************************
+ * ELIMINAR RESERVA
+ *************************************************/
+function eliminarReserva(index) {
+  const reserva = reservasFiltradas[index];
+  
+  const confirmacion = confirm(`⚠️ ¿ELIMINAR esta reserva permanentemente?
+
+Fecha: ${reserva.fecha}
+Hora: ${reserva.hora}
+Cliente: ${reserva.nombre_cliente || 'Sin nombre'}
+Servicio: ${reserva.servicio}
+
+Esta acción NO se puede deshacer.`);
+
+  if (!confirmacion) return;
+
+  // Doble confirmación para mayor seguridad
+  const confirmar2 = confirm('¿Estás COMPLETAMENTE SEGURO?\n\nEsta reserva se eliminará de forma permanente.');
+  
+  if (!confirmar2) return;
+
+  eliminarReservaAPI(reserva);
+}
+
+async function eliminarReservaAPI(reserva) {
+  try {
+    const params = new URLSearchParams({
+      action: 'deleteReservation',
+      fecha: reserva.fecha,
+      hora: reserva.hora
+    });
+
+    const response = await fetch(`${API_URL}?${params.toString()}`);
+    const data = await response.json();
+
+    if (data.success) {
+      alert('✅ Reserva eliminada correctamente');
+      cargarReservas(); // Recargar tabla
+    } else {
+      throw new Error(data.message || 'Error al eliminar');
+    }
+
+  } catch (err) {
+    console.error('❌ Error eliminando reserva:', err);
+    alert('❌ Error al eliminar la reserva:\n' + err.message);
+  }
 }
 
 /*************************************************
